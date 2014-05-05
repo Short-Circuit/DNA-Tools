@@ -27,7 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 
 public class DNA_Tools {
-    private String version = "1.0";
+    private String version = "1.2";
     private JTextPane textPane;
     private JFrame frmDnaTools;
     private JTextField textField;
@@ -48,7 +48,6 @@ public class DNA_Tools {
     private JMenuItem mntmProgramHelp;
     private JMenuItem mntmUpdate;
     private JTextPane updatePane;
-    private static DNA_Tools window;
     /**
      * Launch the application.
      */
@@ -56,7 +55,7 @@ public class DNA_Tools {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    window = new DNA_Tools();
+                    DNA_Tools window = new DNA_Tools();
                     window.frmDnaTools.setVisible(true);
                 }
                 catch (Exception e) {
@@ -85,6 +84,7 @@ public class DNA_Tools {
      * Initialize the contents of the frame.
      */
     private void initialize() {
+        Download.saveDefaults();
         frmDnaTools = new JFrame();
         frmDnaTools.setResizable(false);
         frmDnaTools.setTitle("DNA Tools v" + version + " by Caleb Milligan");
@@ -96,12 +96,15 @@ public class DNA_Tools {
         frmDnaTools.setJMenuBar(menuBar);
 
         mnTools = new JMenu("Tools");
+        mnTools.setMnemonic('T');
         menuBar.add(mnTools);
 
         mnTranslation = new JMenu("Translation");
+        mnTranslation.setMnemonic('L');
         mnTools.add(mnTranslation);
 
         rdbtnmntmFromRna = new JRadioButtonMenuItem("From RNA");
+        rdbtnmntmFromRna.setMnemonic('F');
         rdbtnmntmFromRna.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent event) {
                 if(event.getStateChange() == ItemEvent.SELECTED){
@@ -122,6 +125,7 @@ public class DNA_Tools {
         mnTranslation.add(rdbtnmntmFromRna);
 
         rdbtnmntmIntoRna = new JRadioButtonMenuItem("Into RNA");
+        rdbtnmntmIntoRna.setMnemonic('I');
         rdbtnmntmIntoRna.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent event) {
                 if(event.getStateChange() == ItemEvent.SELECTED){
@@ -142,9 +146,11 @@ public class DNA_Tools {
         mnTranslation.add(rdbtnmntmIntoRna);
 
         mnTranscription = new JMenu("Transcription");
+        mnTranscription.setMnemonic('C');
         mnTools.add(mnTranscription);
 
         rdbtnmntmRnadna = new JRadioButtonMenuItem("RNA->DNA");
+        rdbtnmntmRnadna.setMnemonic('D');
         rdbtnmntmRnadna.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent event) {
                 if(event.getStateChange() == ItemEvent.SELECTED){
@@ -165,6 +171,7 @@ public class DNA_Tools {
         mnTranscription.add(rdbtnmntmRnadna);
 
         rdbtnmntmDnarna = new JRadioButtonMenuItem("DNA->RNA");
+        rdbtnmntmDnarna.setMnemonic('R');
         rdbtnmntmDnarna.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent event) {
                 if(event.getStateChange() == ItemEvent.SELECTED){
@@ -185,9 +192,11 @@ public class DNA_Tools {
         mnTranscription.add(rdbtnmntmDnarna);
 
         mnHelp = new JMenu("Help");
+        mnHelp.setMnemonic('H');
         menuBar.add(mnHelp);
 
         mntmProgramHelp = new JMenuItem("Program Help");
+        mntmProgramHelp.setMnemonic('H');
         mntmProgramHelp.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
                 helpPane.setVisible(true);
@@ -202,9 +211,14 @@ public class DNA_Tools {
         mnHelp.add(mntmProgramHelp);
 
         mntmUpdate = new JMenuItem("Check for Updates");
+        mntmUpdate.setMnemonic('U');
         mntmUpdate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
-                checkForUpdates();
+                lblStart.setVisible(false);
+                updatePane.setVisible(true);
+                if(!lblStart.isVisible() && updatePane.isVisible()){
+                    checkForUpdates();
+                }
             }
         });
         mnHelp.add(mntmUpdate);
@@ -437,8 +451,9 @@ public class DNA_Tools {
                 updatePane.setText(updatePane.getText() + "Download failed: " + e.getClass().getName());
                 return false;
             }
-            updatePane.setText(updatePane.getText() + "Download success");
+            updatePane.setText(updatePane.getText() + "Download success\n");
             try{
+                updatePane.setText(updatePane.getText() + "Restarting DNA Tools...\n");
                 frmDnaTools.dispose();
                 Runtime.getRuntime().exec("cmd /c start javaw -jar \"DNA Tools.jar\"");
             }
