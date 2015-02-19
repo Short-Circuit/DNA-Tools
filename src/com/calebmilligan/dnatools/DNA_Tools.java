@@ -9,7 +9,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -27,9 +26,10 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 
 public class DNA_Tools {
-    private String version = "1.2";
+    private Thread thread;
+    public String version = "1.5";
     private JTextPane textPane;
-    private JFrame frmDnaTools;
+    public JFrame frmDnaTools;
     private JTextField textField;
     private JRadioButtonMenuItem rdbtnmntmRnadna;
     private JMenuBar menuBar;
@@ -42,16 +42,17 @@ public class DNA_Tools {
     private JScrollPane scrollPane;
     private JMenu mnHelp;
     private JTextPane helpPane;
-    private JLabel lblStart;
+    public JLabel lblStart;
     private Map<String, String> config;
     private String action = "none";
     private JMenuItem mntmProgramHelp;
     private JMenuItem mntmUpdate;
-    private JTextPane updatePane;
+    public JTextPane updatePane;
     /**
      * Launch the application.
      */
     public static void main(String[] args) {
+        System.out.println("Let's do this");
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
@@ -69,15 +70,7 @@ public class DNA_Tools {
      */
     public DNA_Tools() {
         initialize();
-        try{
-            String current = Download.checkUpdates();
-            if(Double.parseDouble(version) < Double.parseDouble(current)){
-                frmDnaTools.setTitle(frmDnaTools.getTitle() + " | A new update is available");
-            }
-        }
-        catch(Exception e){
-
-        }
+        checkForUpdates(false);
     }
 
     /**
@@ -217,7 +210,7 @@ public class DNA_Tools {
                 lblStart.setVisible(false);
                 updatePane.setVisible(true);
                 if(!lblStart.isVisible() && updatePane.isVisible()){
-                    checkForUpdates();
+                    checkForUpdates(true);
                 }
             }
         });
@@ -266,7 +259,6 @@ public class DNA_Tools {
                 }
             }
         });
-
         helpPane = new JTextPane();
         helpPane.setEditable(false);
         helpPane.setBounds(0, 0, 517, 251);
@@ -312,26 +304,18 @@ public class DNA_Tools {
         scrollPane.setViewportView(textPane);
         textPane.setEditable(false);
     }
-    public String transcribe(String convertTo, String original){
+    private String transcribe(String convertTo, String original){
         original = original.replace(config.get("UAA"), " ");
-        original = original.replace("! ", " ");
-        original = original.replace("!", " ");
-        original = original.replaceAll("\\? ", " ");
-        original = original.replaceAll("\\?", " ");
-        original = original.replace(". ", " ");
-        original = original.replace(".", " ");
-        original = original.replace(", ", " ");
-        original = original.replace(",", " ");
+        original = original.replaceAll("[!\\?,\\.•]\\s?", " ");
         String[] sequences = original.toUpperCase().split(" ");
         String output = "";
         int sequencePos = 1;
-        int basePos = 1;
         for(String sequence : sequences){
             char[] bases = sequence.toCharArray();
             if(bases.length != 3) {
                 return "Invalid sequence: " + sequencePos;
             }
-            basePos = 1;
+            int basePos = 1;
             for(char base : bases){
                 if(convertTo.equalsIgnoreCase("rna")){
                     if(base == 'T'){
@@ -380,19 +364,12 @@ public class DNA_Tools {
         }
         return output.toUpperCase();
     }
-    public String translate(String convertTo, String original) {
+    private String translate(String convertTo, String original) {
         Random random = new Random();
         random.setSeed(System.currentTimeMillis());
         original = original.replace(config.get("UAA"), " ");
-        original = original.replace("! ", " ");
-        original = original.replace("!", " ");
-        original = original.replaceAll("\\? ", " ");
-        original = original.replaceAll("\\?", " ");
-        original = original.replace(". ", " ");
-        original = original.replace(".", " ");
-        original = original.replace(", ", " ");
-        original = original.replace(",", " ");
-        String output = "";
+		original = original.replaceAll("[!\\?,\\.•]\\s?", " ");
+		String output = "";
         if(convertTo.equals("from")) {
             String[] sequences = original.toUpperCase().split(" ");
             int sequencePos = 1;
@@ -408,7 +385,7 @@ public class DNA_Tools {
         else if(convertTo.equals("to")) {
             String[] stops = {"UGA", "UAG", "UAA"};
             Set<String> keys = config.keySet();
-            Map<String, String> newMap = new HashMap<String, String>();
+            Map<String, String> newMap = new HashMap<>();
             for(String key : keys) {
                 newMap.put(config.get(key), key);
             }
@@ -424,48 +401,8 @@ public class DNA_Tools {
         }
         return output;
     }
-    public boolean checkForUpdates(){
-        updatePane.setVisible(true);
-        lblStart.setVisible(false);
-        String current = version;
-        updatePane.setText("Connecting to server...\n");
-        try{
-            current = Download.checkUpdates();
-        }
-        catch(IOException e){
-            updatePane.setForeground(new Color(255, 0, 0));
-            updatePane.setText(updatePane.getText() + "Connection failed: " + e.getClass().getName() + "\n");
-            return false;
-        }
-        updatePane.setText(updatePane.getText() + "Connected\n");
-        if(Double.parseDouble(current) > Double.parseDouble(version)){
-            updatePane.setText(updatePane.getText() + "New update found: v" + current + "\n");
-            updatePane.setText(updatePane.getText() + "Downloading updates...\n");
-            try{
-                Download.download("https://dl.dropboxusercontent.com/s/hgmvrkspzeict6r/config.yml?dl=1&token_hash=AAFIdpetBrvnMvfmeKza-sVlzBW3MYyiiZCuWv0nAqe1Nw", "config.yml");
-                Download.download("https://dl.dropboxusercontent.com/s/1uvu9xeg7tkeyz4/DNA%20Tools.jar?dl=1&token_hash=AAHiqLqki1fcNcA-zKo9LOLHeENPsvIyjtkI-nvJf5Rb1Q", "DNA Tools.jar");
-                Download.download("https://dl.dropboxusercontent.com/s/uya42anxfinjauk/run.bat?dl=1&token_hash=AAGJXZOy-9xQjQDdB_B6n3HZajZq4p1J9uhsSWNUlMTM2w", "run.bat");
-            }
-            catch(Exception e){
-                updatePane.setForeground(new Color(255, 0, 0));
-                updatePane.setText(updatePane.getText() + "Download failed: " + e.getClass().getName());
-                return false;
-            }
-            updatePane.setText(updatePane.getText() + "Download success\n");
-            try{
-                updatePane.setText(updatePane.getText() + "Restarting DNA Tools...\n");
-                frmDnaTools.dispose();
-                Runtime.getRuntime().exec("cmd /c start javaw -jar \"DNA Tools.jar\"");
-            }
-            catch(Exception e){
-            }
-            return true;
-        }
-        else{
-            if(updatePane != null){
-                updatePane.setText(updatePane.getText() + "No new updates found\n");
-            }
-            return false;
-        }
+    private void checkForUpdates(boolean doDisplay){
+        thread = new Thread(new Update(this, doDisplay));
+        thread.start();
     }
 }
